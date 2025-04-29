@@ -1,0 +1,27 @@
+const amqplib = require('amqplib');
+
+const rabbitmq_url = 'amqp://user:password@infoexpertise.hopto.org:5674';
+const exchange = 'Groupe_LSG_exchange';
+const queue = 'Groupe_LSG_results';
+const routingKey = 'result';
+
+let channel;
+
+async function receive() {
+    const connection = await amqplib.connect(rabbitmq_url);
+    channel = await connection.createChannel();
+
+    await channel.assertExchange(exchange, 'direct', { durable: false });
+    await channel.assertQueue(queue, { durable: false });
+    await channel.bindQueue(queue, exchange, routingKey);
+
+    channel.consume(queue, consume);
+}
+
+function consume(message) {
+    const data = JSON.parse(message.content.toString());
+    console.log(`Résultat: ${data.n1} ${data.op} ${data.n2} = ${data.result}`);
+    setTimeout(() => { channel.ack(message); }, 15000);
+}
+
+receive().catch(console.error);
