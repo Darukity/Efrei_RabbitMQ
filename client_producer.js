@@ -1,6 +1,9 @@
 const amqplib = require('amqplib');
 
-const rabbitmq_url = 'amqp://user:password@infoexpertise.hopto.org:5674';
+const dotenv = require('dotenv');
+dotenv.config();
+
+const rabbitmq_url = process.env.RABBITMQ_URL;
 const exchange = 'Groupe_LSG_exchange';
 const operations = ['add', 'sub', 'mul', 'div', 'all'];
 const MAX_REQUESTS = 50;
