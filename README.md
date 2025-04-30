@@ -1,3 +1,4 @@
+Projet réalisé par Loris NAVARRO / Gaëtan Maire / Samuel CHARTON
 # Projet RabbitMQ – Calculatrice distribuée
 
 Ce dépôt contient une application de calcul distribué basée sur [RabbitMQ](https://www.rabbitmq.com/download.html), avec plusieurs workers effectuant des opérations arithmétiques (`add`, `sub`, `mul`, `div`), un producteur de requêtes et un consommateur de résultats.
@@ -124,27 +125,12 @@ npm install amqplib dotenv
 
 ## Lancement
 
-### A. Sans interface web
-```bash
-# Dans 4 terminaux distincts :
-node worker.js add
-node worker.js sub
-node worker.js mul
-node worker.js div
-
-# Puis dans un autre :
-node client_producer.js
-
-# Et enfin :
-node client_result.js
-```
-
-### B. Avec script d’automatisation avec la partie python
+### A. Avec script d’automatisation avec la partie python Sans interface web
 ```bash
 node start_all_python.js
 ```
 
-### C. Avec interface web
+### B. Avec interface web
 
 1. Assurez-vous d’avoir le dossier `public/` contenant `index.html` et `script.js`.  
 2. Installez en plus :
