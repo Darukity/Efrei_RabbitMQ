@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Calculatrice RabbitMQ</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 20px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+      margin-top: 30px;
+    }
+    .column {
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      padding: 10px;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    .column h3 {
+      margin-top: 0;
+      font-size: 1.1em;
+      text-align: center;
+    }
+    .column ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .column li {
+      padding: 4px 0;
+      border-bottom: 1px solid #eee;
+    }
+  </style>
+</head>
+<body>
+  <h1>Calculatrice RabbitMQ</h1>
+
+  <form id="calc-form">
+    <select id="op">
+      <option value="add">Addition (+)</option>
+      <option value="sub">Soustraction (−)</option>
+      <option value="mul">Multiplication (×)</option>
+      <option value="div">Division (÷)</option>
+    </select>
+    <input type="number" id="n1" placeholder="Nombre 1" required>
+    <input type="number" id="n2" placeholder="Nombre 2" required>
+    <button type="submit">Envoyer</button>
+  </form>
+
+  <button id="start-producer">Démarrer le producteur</button>
+
+  <div class="grid">
+    <div class="column">
+      <h3>Addition (+)</h3>
+      <ul id="results-add"></ul>
+    </div>
+    <div class="column">
+      <h3>Soustraction (−)</h3>
+      <ul id="results-sub"></ul>
+    </div>
+    <div class="column">
+      <h3>Multiplication (×)</h3>
+      <ul id="results-mul"></ul>
+    </div>
+    <div class="column">
+      <h3>Division (÷)</h3>
+      <ul id="results-div"></ul>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
