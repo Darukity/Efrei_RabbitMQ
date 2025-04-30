@@ -19,17 +19,15 @@ Ce dépôt contient une application de calcul distribué basée sur [RabbitMQ](h
 
 ## Prérequis
 
-Avant de commencer, vous devez disposer de :
+Assurez-vous d'avoir **les versions minimales suivantes** installées sur votre machine (Windows recommandé) :
 
-- **Node.js** (v14+)  
-  Téléchargez et installez depuis : https://nodejs.org/  
-- **npm** (inclus avec Node.js)  
-- **RabbitMQ**  
-  Téléchargez et installez depuis : https://www.rabbitmq.com/download.html  
-- **Erlang/OTP** (dépendance de RabbitMQ)  
-  Pour les instructions, voir : https://www.erlang.org/downloads  
-- **Éditeur de code** (recommandé : Visual Studio Code)  
-  Téléchargez : https://code.visualstudio.com/
+| Outil     | Version minimale requise |
+|-----------|---------------------------|
+| **Node.js**   | 20.11.0                   |
+| **npm**       | 10.5.0                    |
+| **Python**    | 3.12.0                    |
+| **pip**       | 25.0.1                    |
+| **Git**       | Dernière version          |
 
 > Sur **macOS**, **Windows** ou **Linux**. Les commandes ci-dessous couvrent les trois environnements.
 
@@ -177,7 +175,7 @@ Opération (operation)	Type d’opération à effectuer :
 - sub (soustraction)
 - mul (multiplication)
 - div (division)
-📝 Note : En mode random, seuls count et operation sont pris en compte. Les champs n1 et n2 sont ignorés.
+📝 Note : En mode random, les champs n1 et n2 et count et operation sont ignorés.
 
 ---
 
