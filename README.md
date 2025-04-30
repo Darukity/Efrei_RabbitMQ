@@ -86,7 +86,8 @@ brew services start rabbitmq
 ```bash
 git clone <URL_DU_REPO>
 cd <NOM_DU_REPO>
-npm install amqplib dotenv
+npm i
+pip install -r requirements.txt
 ```
 
 ---
@@ -126,6 +127,10 @@ npm install amqplib dotenv
 ## Lancement
 
 ### A. Avec script d’automatisation avec la partie python Sans interface web
+1. Installez en plus :
+   ```bash
+   pip install -r requirements.txt
+   ```
 ```bash
 node start_all_python.js
 ```
