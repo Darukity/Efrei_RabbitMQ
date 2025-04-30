@@ -1,4 +1,9 @@
 Projet réalisé par Loris NAVARRO / Gaëtan Maire / Samuel CHARTON
+
+Le projet peut fonctionner de 2 facons avec les start all.
+- Le premier avec le start all python qui fonctionne avec le fichier producer en python sans interface web.
+- Le deuxième avec le start all basique qui permet l'utilisation d'une interface web.
+
 # Projet RabbitMQ – Calculatrice distribuée
 
 Ce dépôt contient une application de calcul distribué basée sur [RabbitMQ](https://www.rabbitmq.com/download.html), avec plusieurs workers effectuant des opérations arithmétiques (`add`, `sub`, `mul`, `div`), un producteur de requêtes et un consommateur de résultats.
