@@ -105,8 +105,7 @@ pip install -r requirements.txt
    ```
 2. Éditez `.env` pour définir votre URL RabbitMQ :
    ```dotenv
-   RABBITMQ_URL=amqp://guest:guest@localhost:5672
-   PORT=3000           # (optionnel si vous utilisez l’interface web)
+   RABBITMQ_URL=??????
    ```
 
 ---
