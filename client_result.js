@@ -1,5 +1,4 @@
 const amqplib = require('amqplib');
-
 const dotenv = require('dotenv');
 dotenv.config();
 
@@ -9,6 +8,11 @@ const queue = 'Groupe_LSG_results';
 const routingKey = 'result';
 
 let channel;
+let onResultCallback = null;
+
+function setOnResult(callback) {
+    onResultCallback = callback;
+}
 
 async function receive() {
     const connection = await amqplib.connect(rabbitmq_url);
@@ -24,7 +28,17 @@ async function receive() {
 function consume(message) {
     const data = JSON.parse(message.content.toString());
     console.log(`Résultat: ${data.n1} ${data.op} ${data.n2} = ${data.result}`);
-    setTimeout(() => { channel.ack(message); }, 15000);
+
+    if (onResultCallback) {
+        onResultCallback(data); // On envoie au front
+    }
+
+    setTimeout(() => {
+        channel.ack(message);
+    }, 15000);
 }
 
-receive().catch(console.error);
+module.exports = {
+    start: receive,
+    setOnResult
+};

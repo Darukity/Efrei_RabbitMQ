@@ -1,79 +1,58 @@
-// server.js
 const express = require('express');
 const http = require('http');
-const socketIo = require('socket.io');
-const amqplib = require('amqplib');
-const dotenv = require('dotenv');
-dotenv.config();
+const { Server } = require('socket.io');
+const { spawn } = require('child_process');
+const path = require('path');
 
-const RABBITMQ_URL = process.env.RABBITMQ_URL;
-const EXCHANGE = 'Groupe_LSG_exchange';
-const RESULT_ROUTING = 'result';
-const MAX_REQUESTS = 50;
+const clientResult = require('./client_result');
 
-async function startRabbit() {
-  const conn = await amqplib.connect(RABBITMQ_URL);
-  const ch = await conn.createChannel();
-  await ch.assertExchange(EXCHANGE, 'direct', { durable: false });
-  const resultQueue = 'Groupe_LSG_results';
-  await ch.assertQueue(resultQueue, { durable: false });
-  await ch.bindQueue(resultQueue, EXCHANGE, RESULT_ROUTING);
-  return { ch, resultQueue };
-}
+const app = express();
+const server = http.createServer(app);
+const io = new Server(server);
 
-// génère des requêtes aléatoires
-async function generateRequests(ch) {
-  const operations = ['add', 'sub', 'mul', 'div', 'all'];
-  let count = 0;
-  while (count < MAX_REQUESTS) {
-    const op = operations[Math.floor(Math.random() * operations.length)];
-    const n1 = Math.floor(Math.random() * 100);
-    const n2 = Math.floor(Math.random() * 100);
-    const msg = { op, n1, n2, clientId: null }; // clientId null = broadcast
-    const targets = op === 'all' ? ['add','sub','mul','div'] : [op];
-    for (const routingKey of targets) {
-      ch.publish(EXCHANGE, routingKey, Buffer.from(JSON.stringify(msg)));
-    }
-    count++;
-    await new Promise(res => setTimeout(res, Math.random() * 3000 + 1000));
-  }
-  console.log(`✓ ${MAX_REQUESTS} requêtes aléatoires envoyées`);
-}
+app.use(express.static(path.join(__dirname, 'public')));
 
-(async () => {
-  const app = express();
-  const server = http.createServer(app);
-  const io = socketIo(server);
-  const { ch, resultQueue } = await startRabbit();
+// Démarrage du listener RabbitMQ
+clientResult.setOnResult((result) => {
+    io.emit('result', result); // envoi à tous les clients connectés
+});
 
-  app.use(express.static('public'));
+clientResult.start();
 
-  io.on('connection', socket => {
-    console.log(`Client connecté : ${socket.id}`);
+// Ecoute des requêtes du front
+io.on('connection', (socket) => {
+    console.log('🧠 Nouveau client connecté');
 
-    // calcul individuel
-    socket.on('compute', ({ op, n1, n2 }) => {
-      const msg = { op, n1, n2, clientId: socket.id };
-      ch.publish(EXCHANGE, op, Buffer.from(JSON.stringify(msg)));
+    socket.on('startProducer', ({ mode, operations, count, delay, n1, n2 }) => {
+        console.log('⚙️ Lancement de client_producer avec :', { mode, operations, count, delay, n1, n2 });
+
+        const args = [`--mode=${mode}`];
+
+        if (mode === 'user') {
+            if (operations) args.push(`--operation=${operations.join(',')}`);
+            if (count) args.push(`--count=${count}`);
+            if (delay) args.push(`--delay=${delay}`);
+            if (n1 != null) args.push(`--n1=${n1}`);
+            if (n2 != null) args.push(`--n2=${n2}`);
+        }
+
+        const producer = spawn('node', ['client_producer.js', ...args]);
+
+        producer.stdout.on('data', data => {
+            console.log(`📤 [Producer]: ${data}`);
+        });
+
+        producer.stderr.on('data', data => {
+            console.error(`❌ [Producer Error]: ${data}`);
+        });
+
+        producer.on('close', code => {
+            console.log(`🔚 Producteur terminé avec le code ${code}`);
+        });
     });
+});
 
-    // lancement du producteur depuis le front
-    socket.on('startProducer', () => {
-      console.log(`Lancement du producteur pour ${socket.id}`);
-      generateRequests(ch).catch(console.error);
-    });
-
-    // consommation des résultats
-    ch.consume(resultQueue, m => {
-      const data = JSON.parse(m.content.toString());
-      // n'envoyer que si clientId correspond (ou si broadcast)
-      if (!data.clientId || data.clientId === socket.id) {
-        socket.emit('result', data);
-      }
-      ch.ack(m);
-    }, { noAck: false });
-  });
-
-  const PORT = process.env.PORT || 3000;
-  server.listen(PORT, () => console.log(`GUI server running on http://localhost:${PORT}`));
-})();
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+    console.log(`✅ Serveur démarré sur http://localhost:${PORT}`);
+});

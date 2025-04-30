@@ -19,6 +19,9 @@ function startScript(title, command) {
     startScript(`worker_${op}`, `node worker.js ${op}`);
 });
 
+// Interface graphique pour afficher les résultats
+startScript('server', 'node server.js');
+
 // Client pour afficher les résultats
 startScript('client_result', 'node client_result.js');
 
