@@ -141,34 +141,50 @@ node client_producer.js
 node client_result.js
 ```
 
-### B. Avec script d’automatisation
+### B. Avec script d’automatisation avec la partie python
 ```bash
-node start_all.js
+node start_all_python.js
 ```
 
-### C. Avec interface web (optionnel)
+### C. Avec interface web
 
 1. Assurez-vous d’avoir le dossier `public/` contenant `index.html` et `script.js`.  
 2. Installez en plus :
    ```bash
-   npm install express socket.io amqplib dotenv
+   npm i
    ```
 3. Lancez le serveur :
    ```bash
-   node server.js
+   node start_all.js
    ```
 4. Ouvrez votre navigateur sur :
    ```
    http://localhost:3000
    ```
-5. Utilisez le formulaire pour envoyer vos calculs ou cliquez sur **Démarrer le producteur** pour lancer 50 requêtes aléatoires.
+5. Utilisez le formulaire pour envoyer vos calculs ou cliquez sur **Démarrer le producteur** pour lancer des requêtes aléatoires.
+---
+##🖱️ Options disponibles dans le formulaire
+
+Champ	Description
+Nombre 1 (n1)	Premier nombre à utiliser pour les calculs.
+Nombre 2 (n2)	Deuxième nombre à utiliser pour les calculs.
+Nombre de calculs (count)	Nombre total de requêtes à envoyer.
+Type (type)	Choix du mode d’envoi :
+- user : utilise les valeurs définies pour n1 et n2.
+- random : ignore n1 et n2, et utilise des nombres aléatoires pour chaque requête.
+Opération (operation)	Type d’opération à effectuer :
+- add (addition)
+- sub (soustraction)
+- mul (multiplication)
+- div (division)
+📝 Note : En mode random, seuls count et operation sont pris en compte. Les champs n1 et n2 sont ignorés.
 
 ---
 
 ## Utilisation
 
 - **Workers** : écoutent les files `calc_add`, `calc_sub`, `calc_mul`, `calc_div`, calculent avec un délai aléatoire, et publient les réponses sous la clé `result`.  
-- **client_producer.js** : envoie 50 messages aléatoires (opération + deux nombres). Si `op === 'all'`, envoie vers les 4 workers.  
+- **client_producer.js** : envoie 10 messages aléatoires (opération + deux nombres). Si `op === 'all'`, envoie vers les 4 workers.  
 - **client_result.js** : consomme la file `Groupe_LSG_results` et affiche chaque résultat dans la console.  
 - **Interface web** : optionnelle, front temps réel via Socket.IO.
 
