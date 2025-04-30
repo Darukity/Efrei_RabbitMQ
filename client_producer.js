@@ -10,7 +10,7 @@ const args = process.argv.slice(2);
 const mode = args?.find(arg => arg.startsWith('--mode='))?.split('=')[1] || 'random';
 
 let operations = ['add', 'sub', 'mul', 'div', 'all'];
-let MAX_REQUESTS = 50;
+let MAX_REQUESTS = 10;
 let DELAY = 1000;
 let n1 = Math.floor(Math.random() * 100);
 let n2 = Math.floor(Math.random() * 100);
@@ -55,8 +55,8 @@ if (mode === 'user') {
 // console.log(`Max requests: ${MAX_REQUESTS}`);
 // console.log(`Delay: ${DELAY}`);
 
-let connection = null;
-let channel = null;
+let connection ;//= null;
+let channel ;//= null;
 
 async function gracefulShutdown() {
     try {
@@ -83,24 +83,28 @@ async function startRequester() {
             const op = operations[Math.floor(Math.random() * operations.length)];
             const num1 = mode === 'user' ? n1 : Math.floor(Math.random() * 100);
             const num2 = mode === 'user' ? n2 : Math.floor(Math.random() * 100);
-            const message = { n1: num1, n2: num2, op };
-
             const targets = op === 'all' ? ['add', 'sub', 'mul', 'div'] : [op];
 
             for (const routingKey of targets) {
-                channel.publish(exchange, routingKey, Buffer.from(JSON.stringify(message)));
-                console.log(`Envoyé à ${routingKey}: ${JSON.stringify(message)}`);
+                const operationMessage = {
+                    n1: num1,
+                    n2: num2,
+                    op: routingKey  // ici on remplace "all" par l'opération du worker
+                };
+            
+                channel.publish(exchange, routingKey, Buffer.from(JSON.stringify(operationMessage)));
+                console.log(`Envoyé à ${routingKey}: ${JSON.stringify(operationMessage)}`);
             }
 
             await new Promise(res => setTimeout(res, DELAY));
         }
 
         console.log(`✓ ${MAX_REQUESTS} requêtes envoyées, fermeture propre...`);
-        await gracefulShutdown();
+        //await gracefulShutdown();
 
     } catch (err) {
         console.error('Erreur dans le requester :', err);
-        await gracefulShutdown();
+        //await gracefulShutdown();
     }
 }
 

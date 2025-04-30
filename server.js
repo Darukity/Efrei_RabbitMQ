@@ -1,58 +1,59 @@
 const express = require('express');
-const http = require('http');
-const { Server } = require('socket.io');
+const bodyParser = require('body-parser');
 const { spawn } = require('child_process');
-const path = require('path');
-
 const clientResult = require('./client_result');
+const dotenv = require('dotenv');
+dotenv.config();
 
 const app = express();
-const server = http.createServer(app);
-const io = new Server(server);
+const PORT = 3000;
 
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(bodyParser.json());
+app.use(express.static('public'));
 
-// Démarrage du listener RabbitMQ
-clientResult.setOnResult((result) => {
-    io.emit('result', result); // envoi à tous les clients connectés
+// Stockage temporaire en mémoire
+const results = [];
+
+// Callback appelé par client_result.js quand un résultat arrive
+clientResult.setOnResult((data) => {
+    //console.log('Résultat reçu dans server :', data);
+    results.push(data); 
 });
 
-clientResult.start();
+clientResult.start(); // Démarre l'écoute des résultats RabbitMQ
 
-// Ecoute des requêtes du front
-io.on('connection', (socket) => {
-    console.log('🧠 Nouveau client connecté');
+// POST /calculate déclenche un calcul
+app.post('/calculate', async (req, res) => {
+    const { n1, n2, count, type, operation, } = req.body;
 
-    socket.on('startProducer', ({ mode, operations, count, delay, n1, n2 }) => {
-        console.log('⚙️ Lancement de client_producer avec :', { mode, operations, count, delay, n1, n2 });
+    if (isNaN(n1) || isNaN(n2) || !['add', 'sub', 'mul', 'div'].includes(operation)) {
+        return res.status(400).json({ error: 'Données invalides' });
+    }
 
-        const args = [`--mode=${mode}`];
+    // Lancer le producteur avec spawn
+    const producer = spawn('node', [
+        'client_producer.js',
+        `--n1=${n1}`,
+        `--n2=${n2}`,
+        `--count=${count}`,
+        `--operation=${operation}`,
+        `--mode=${type}`
+    ]);
 
-        if (mode === 'user') {
-            if (operations) args.push(`--operation=${operations.join(',')}`);
-            if (count) args.push(`--count=${count}`);
-            if (delay) args.push(`--delay=${delay}`);
-            if (n1 != null) args.push(`--n1=${n1}`);
-            if (n2 != null) args.push(`--n2=${n2}`);
+    producer.on('close', (code) => {
+        if (code !== 0) {
+            return res.status(500).json({ error: 'Erreur dans le processus de calcul' });
         }
-
-        const producer = spawn('node', ['client_producer.js', ...args]);
-
-        producer.stdout.on('data', data => {
-            console.log(`📤 [Producer]: ${data}`);
-        });
-
-        producer.stderr.on('data', data => {
-            console.error(`❌ [Producer Error]: ${data}`);
-        });
-
-        producer.on('close', code => {
-            console.log(`🔚 Producteur terminé avec le code ${code}`);
-        });
+        res.json({ message: 'Calcul lancé avec succès' });
     });
 });
 
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-    console.log(`✅ Serveur démarré sur http://localhost:${PORT}`);
+// GET /results retourne les résultats au front
+app.get('/results', (req, res) => {
+    res.json(results);
+});
+
+// Démarrage du serveur
+app.listen(PORT, () => {
+    console.log(`Serveur en écoute sur http://localhost:${PORT}`);
 });

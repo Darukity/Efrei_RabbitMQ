@@ -1,40 +1,65 @@
-const socket = io();
-
-const lists = {
-  add: document.getElementById('results-add'),
-  sub: document.getElementById('results-sub'),
-  mul: document.getElementById('results-mul'),
-  div: document.getElementById('results-div'),
-};
-
-document.getElementById('calc-form').addEventListener('submit', e => {
+document.getElementById('calcForm').addEventListener('submit', async (e) => {
   e.preventDefault();
-  const op = document.getElementById('op').value;
-  const n1 = parseFloat(document.getElementById('n1').value);
-  const n2 = parseFloat(document.getElementById('n2').value);
 
-  socket.emit('startProducer', {
-    mode: 'user',
-    operations: [op],
-    count: 1,
-    delay: 100,
-    n1,
-    n2
+  const form = e.target;
+
+  const n1 = parseFloat(form.n1.value);
+  const n2 = parseFloat(form.n2.value);
+  const count = parseInt(form.count.value);
+  const type = form.type.value;
+  const operation = form.operation.value;
+
+  await fetch('/calculate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+          n1,
+          n2,
+          count,
+          type,
+          operation
+      })
   });
+
+  // Attendre un peu pour laisser les workers répondre
+  setTimeout(loadResults, 1500);
 });
 
-document.getElementById('start-producer').addEventListener('click', () => {
-  socket.emit('startProducer', {
-    mode: 'random',
-    operations: ['add', 'sub', 'mul', 'div', 'all'],
-    count: 50,
-    delay: 1000
-  });
-});
+async function loadResults() {
+  const res = await fetch('/results');
+  const data = await res.json();
 
-socket.on('result', ({ n1, n2, op, result }) => {
-  const sym = { add: '+', sub: '−', mul: '×', div: '÷' }[op] || op;
-  const li = document.createElement('li');
-  li.textContent = `${n1} ${sym} ${n2} = ${result}`;
-  if (lists[op]) lists[op].prepend(li);
-});
+  const tableBody = document.querySelector('#resultsTable tbody');
+  tableBody.innerHTML = '';
+
+  const grouped = { add: [], sub: [], mul: [], div: [] };
+
+  for (const result of data) {
+      if (grouped[result.op]) {
+          grouped[result.op].push(result);
+      }
+  }
+
+  const maxRows = Math.max(
+      grouped.add.length,
+      grouped.sub.length,
+      grouped.mul.length,
+      grouped.div.length
+  );
+
+  for (let i = 0; i < maxRows; i++) {
+      const row = document.createElement('tr');
+      ['add', 'sub', 'mul', 'div'].forEach(op => {
+          const td = document.createElement('td');
+          if (grouped[op][i]) {
+              const r = grouped[op][i];
+              td.textContent = `${r.n1} ${r.op} ${r.n2} = ${r.result}`;
+          }
+          row.appendChild(td);
+      });
+      tableBody.appendChild(row);
+  }
+}
+
+// Actualise automatiquement les résultats toutes les 3 secondes
+setInterval(loadResults, 3000);
